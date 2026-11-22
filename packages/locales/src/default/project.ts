@@ -64,7 +64,7 @@ export default {
   'topics.subGroup.byStatus': 'By status',
   'settings.addDirectory': 'Add folder',
   'settings.addDirectoryDescription':
-    'Select an environment and a connected device, then enter the full path of an existing folder. Files stay on that device.',
+    'Select a connected device, then enter the full path of an existing folder. Files stay on that device.',
   'settings.directoryUnavailable':
     'The device is disconnected or the directory is unavailable. Connect the device and check the path, then retry.',
 
@@ -698,4 +698,6 @@ export default {
   'settings.setDeviceDirectory': 'Set folder',
   'settings.noDevices':
     'No connected devices yet. Open the LobeHub desktop app or run lh connect on a machine to add it.',
+  'settings.setDirectoryDescription':
+    'Enter the full path of an existing folder on {{device}}. Files stay on that device.',
 };

@@ -11,7 +11,7 @@ import {
   toast,
   Tooltip,
 } from '@lobehub/ui';
-import { FolderIcon, LinkIcon, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import { FolderIcon, LinkIcon, PencilIcon, Trash2Icon } from 'lucide-react';
 import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -62,11 +62,10 @@ interface LocalDirectoriesProps {
 
 /**
  * The project's working directory on each device, device by device: where its
- * code already sits on that machine, so a conversation can run there. A device
- * that has one shows it; an online device that has none offers to set it — the
- * machines someone is using are the ones worth a folder. A device the project
- * left a folder on stays listed while offline, so the folder can be changed or
- * removed.
+ * code already sits on that machine, so a conversation can run there. Every
+ * connected device is listed, online ones first: one that has a folder shows
+ * it, one that has none offers to set it. A folder on a device no longer in
+ * the list stays, so it can still be changed or removed.
  */
 export function LocalDirectories({ canManage, environmentId, projectId }: LocalDirectoriesProps) {
   const { t } = useTranslation('project');
@@ -98,8 +97,8 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
       title: t('settings.removeDirectoryConfirmTitle', { name: directory.name }),
     });
 
-  const setDirectory = (deviceId?: string) =>
-    openAddDirectoryModal(projectId, environmentId, deviceId ? { deviceId } : undefined);
+  const setDirectory = (deviceId: string) =>
+    openAddDirectoryModal(projectId, environmentId, { deviceId });
 
   /** One device: its name and presence, then what it holds for the project. */
   const row = (key: string, head: ReactNode, path: ReactNode, actions: ReactNode) => (
@@ -166,43 +165,45 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
   if (!directoriesRequest.hasData || !isDeviceListLoaded)
     return <Text type="secondary">{t('loading', { ns: 'common' })}</Text>;
 
-  const withFolders = directories.map((directory) => {
-    const device = devices.find((d) => d.deviceId === directory.deviceId);
-    return row(
-      directory.id,
-      <>
-        {deviceHead(device, directory.deviceName || directory.deviceId)}
-        {!directory.instanceId && unlinkedBadge(directory)}
-      </>,
-      <Text fontSize={12} style={{ overflowWrap: 'anywhere' }} type="secondary">
-        {directory.path}
-      </Text>,
-      <>
-        {canManage && (
-          <ActionIcon
-            icon={PencilIcon}
-            size="small"
-            title={t('settings.editDirectory')}
-            onClick={() => openEditDirectoryModal(projectId, directory)}
-          />
-        )}
-        {canManage && (
-          <ActionIcon
-            icon={Trash2Icon}
-            size="small"
-            title={t('settings.removeDirectory')}
-            onClick={() => remove(directory)}
-          />
-        )}
-      </>,
-    );
-  });
+  const online = (deviceId: string) =>
+    !!devices.find((device) => device.deviceId === deviceId)?.online;
+  const withFolders = [...directories]
+    .sort((a, b) => Number(online(b.deviceId)) - Number(online(a.deviceId)))
+    .map((directory) => {
+      const device = devices.find((d) => d.deviceId === directory.deviceId);
+      return row(
+        directory.id,
+        <>
+          {deviceHead(device, directory.deviceName || directory.deviceId)}
+          {!directory.instanceId && unlinkedBadge(directory)}
+        </>,
+        <Text fontSize={12} style={{ overflowWrap: 'anywhere' }} type="secondary">
+          {directory.path}
+        </Text>,
+        <>
+          {canManage && (
+            <ActionIcon
+              icon={PencilIcon}
+              size="small"
+              title={t('settings.editDirectory')}
+              onClick={() => openEditDirectoryModal(projectId, directory)}
+            />
+          )}
+          {canManage && (
+            <ActionIcon
+              icon={Trash2Icon}
+              size="small"
+              title={t('settings.removeDirectory')}
+              onClick={() => remove(directory)}
+            />
+          )}
+        </>,
+      );
+    });
 
   const withoutFolder = devices
-    .filter(
-      (device) =>
-        device.online && !directories.some((directory) => directory.deviceId === device.deviceId),
-    )
+    .filter((device) => !directories.some((directory) => directory.deviceId === device.deviceId))
+    .sort((a, b) => Number(!!b.online) - Number(!!a.online))
     .map((device) =>
       row(
         device.deviceId,
@@ -226,14 +227,6 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
         </Text>
       ) : (
         [...withFolders, ...withoutFolder]
-      )}
-      {/* An offline machine has no row of its own; the dialog picks any device. */}
-      {canManage && (
-        <Flexbox horizontal>
-          <Button icon={<Icon icon={PlusIcon} />} size="small" onClick={() => setDirectory()}>
-            {t('settings.addDirectory')}
-          </Button>
-        </Flexbox>
       )}
     </Flexbox>
   );
