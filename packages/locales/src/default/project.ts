@@ -677,7 +677,6 @@ export default {
   'artboard.question.answer': 'Answer',
   'artboard.question.hint': 'Your answer goes to the agent with the next send.',
   'environment.configure': 'Configure environment',
-  'settings.environmentIntro': "Where this project's conversations run, and what each place needs.",
   'createFromGithub.addRepository': 'Add',
   'createFromGithub.removeRepository': 'Remove',
   'createFromGithub.openIntegrations': 'Open GitHub settings',
@@ -698,9 +697,5 @@ export default {
   'overview.context.location.emptySandboxDesc':
     'Starts in an empty folder, without the project environment',
   'settings.cloudSandboxGroup': 'Cloud sandbox',
-  'settings.cloudSandboxGroupDesc':
-    'New conversations run here by default: the repositories below are cloned, the setup command runs and the variables are set.',
   'settings.devicesGroup': 'Devices',
-  'settings.devicesGroupDesc':
-    "Run in the project's folders on connected devices. Drag to set priority: a new conversation uses the first device that is online.",
 };

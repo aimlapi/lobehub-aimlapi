@@ -77,6 +77,11 @@ interface EnvironmentFormProps {
    * the project and edited as part of it.
    */
   hideBasics?: boolean;
+  /**
+   * Leaves out how repositories are cloned and when an edit takes effect: a
+   * project's page keeps to the repositories themselves.
+   */
+  hideRepositoryHints?: boolean;
   onSave: (params: {
     configuration?: SandboxEnvironmentSpecification;
     description?: string;
@@ -338,6 +343,7 @@ const EnvironmentForm = memo<EnvironmentFormProps>(
     collapseSetup,
     environment,
     hideBasics,
+    hideRepositoryHints,
     onSave,
     renderRepositoryLocations,
   }) => {
@@ -551,10 +557,11 @@ const EnvironmentForm = memo<EnvironmentFormProps>(
         {!hideBasics && basics}
 
         <PanelSection
-          desc={t('environments.form.sourcesHint')}
+          desc={hideRepositoryHints ? undefined : t('environments.form.sourcesHint')}
           title={t('environments.form.sources')}
           notice={
-            /* When an edit here reaches an instance, which is the question this
+            hideRepositoryHints ? undefined : (
+              /* When an edit here reaches an instance, which is the question this
              panel otherwise leaves open. An instance keeps the definition it
              was created with — `configurationSnapshot`, taken once at creation
              — and a rebuild replays that one rather than reading the
@@ -562,9 +569,10 @@ const EnvironmentForm = memo<EnvironmentFormProps>(
              saying "rebuild to apply" would send people to a button that
              cannot do it. Said once, here at the top: setup and variables are
              governed by the same snapshot. */
-            <Text fontSize={12} type={'secondary'}>
-              {t('environments.form.appliesOnInit')}
-            </Text>
+              <Text fontSize={12} type={'secondary'}>
+                {t('environments.form.appliesOnInit')}
+              </Text>
+            )
           }
         >
           {repositories.length === 0 && !pickingRepository && (

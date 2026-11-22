@@ -1,5 +1,6 @@
-import { Flexbox, Text } from '@lobehub/ui';
-import { type ReactNode } from 'react';
+import { Flexbox, Icon, Text } from '@lobehub/ui';
+import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AsyncError from '@/components/AsyncError';
@@ -14,7 +15,6 @@ import {
   useProjectDirectoryStore,
   useProjectEnvironments,
 } from '@/store/projectWorkingDirectory';
-import { useDensityTokens } from '@/styles/density';
 
 import { LocalDirectories } from './LocalDirectories';
 import { RepositoryCloudNotice } from './RepositoryCloudNotice';
@@ -25,18 +25,38 @@ interface ProjectWorkingDirectoriesProps {
   projectId: string;
 }
 
-/** One of the two places a project conversation runs, with what it needs. */
-const Group = ({ children, desc, title }: { children: ReactNode; desc: string; title: string }) => (
-  <Flexbox gap={4}>
+/** One of the two places a project conversation runs; open until folded. */
+const Group = ({ children, title }: { children: ReactNode; title: string }) => {
+  const [open, setOpen] = useState(true);
+  const toggle = () => setOpen((value) => !value);
+
+  return (
     <Flexbox gap={4}>
-      <Text fontSize={16} weight={600}>
-        {title}
-      </Text>
-      <Text type="secondary">{desc}</Text>
+      <Flexbox
+        horizontal
+        align="center"
+        aria-expanded={open}
+        gap={8}
+        paddingBlock={4}
+        role="button"
+        style={{ cursor: 'pointer' }}
+        tabIndex={0}
+        onClick={toggle}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          toggle();
+        }}
+      >
+        <Icon icon={open ? ChevronDownIcon : ChevronRightIcon} size={16} />
+        <Text fontSize={16} weight={600}>
+          {title}
+        </Text>
+      </Flexbox>
+      {open && children}
     </Flexbox>
-    {children}
-  </Flexbox>
-);
+  );
+};
 
 /**
  * Where the project's conversations run, one place at a time, each with only
@@ -58,7 +78,6 @@ export function ProjectWorkingDirectories({
   projectId,
 }: ProjectWorkingDirectoriesProps) {
   const { t } = useTranslation(['project', 'setting']);
-  const { pageTitleFontSize } = useDensityTokens();
   const request = useProjectDirectoryStore((s) => s.useFetchEnvironments)(projectId);
   const updateEnvironment = useProjectDirectoryStore((s) => s.updateProjectEnvironment);
   const [environment] = useProjectEnvironments(projectId);
@@ -92,6 +111,7 @@ export function ProjectWorkingDirectories({
         allowLocalOnly
         collapseSetup
         hideBasics
+        hideRepositoryHints
         environment={value}
         renderRepositoryLocations={renderRepositoryLocations}
         onSave={save}
@@ -105,17 +125,9 @@ export function ProjectWorkingDirectories({
   }
 
   return (
-    <Flexbox gap={32}>
-      <Flexbox gap={8}>
-        <Text fontSize={pageTitleFontSize} weight={600}>
-          {t('settings.environments')}
-        </Text>
-        <Text type="secondary">{t('settings.environmentIntro')}</Text>
-      </Flexbox>
-      <Group desc={t('settings.cloudSandboxGroupDesc')} title={t('settings.cloudSandboxGroup')}>
-        {cloud}
-      </Group>
-      <Group desc={t('settings.devicesGroupDesc')} title={t('settings.devicesGroup')}>
+    <Flexbox gap={24}>
+      <Group title={t('settings.cloudSandboxGroup')}>{cloud}</Group>
+      <Group title={t('settings.devicesGroup')}>
         <LocalDirectories
           canManage={!!canManage}
           environmentId={environment?.id}
