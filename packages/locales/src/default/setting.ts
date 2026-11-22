@@ -5462,6 +5462,11 @@ When I am ___, I need ___
   'environments.form.editRepositorySettings': 'Edit branch, folder and setup',
   'environments.form.repositorySetupHint':
     "Runs inside this repository's folder after it's cloned, before the environment's setup command.",
+  'environments.form.setupAndVariables': 'Setup and environment variables',
+  'environments.form.setupConfigured': 'Setup configured',
+  'environments.form.setupNotConfigured': 'No setup',
+  'environments.form.variablesCount_one': '{{count}} variable',
+  'environments.form.variablesCount_other': '{{count}} variables',
   'environments.form.localOnly': 'Skip in cloud sandbox',
   'environments.form.localOnlyHint':
     "Cloud sandboxes don't clone this repository; it's used from the project's device folders. The setup command in the cloud must not depend on it.",

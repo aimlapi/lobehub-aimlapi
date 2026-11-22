@@ -90,6 +90,7 @@ export function ProjectWorkingDirectories({
     cloud = canManage ? (
       <EnvironmentForm
         allowLocalOnly
+        collapseSetup
         hideBasics
         environment={value}
         renderRepositoryLocations={renderRepositoryLocations}

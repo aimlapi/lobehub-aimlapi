@@ -14,6 +14,8 @@ import {
   toast,
 } from '@lobehub/ui';
 import {
+  ChevronDownIcon,
+  ChevronRightIcon,
   ChevronUpIcon,
   FolderIcon,
   GitBranchIcon,
@@ -63,6 +65,12 @@ interface EnvironmentFormProps {
    * folders a local-only repository can run in.
    */
   allowLocalOnly?: boolean;
+  /**
+   * Folds the setup command and the variables into one row with a summary.
+   * They are set once and rarely touched, so on a page that also lists the
+   * project's devices they should not push those out of view.
+   */
+  collapseSetup?: boolean;
   environment: EnvironmentFormValue;
   /**
    * Hides the name and description: a project's environment is named after
@@ -325,8 +333,16 @@ BranchField.displayName = 'EnvironmentBranchField';
  * tab switch before anyone scrolled down to it.
  */
 const EnvironmentForm = memo<EnvironmentFormProps>(
-  ({ allowLocalOnly, environment, hideBasics, onSave, renderRepositoryLocations }) => {
+  ({
+    allowLocalOnly,
+    collapseSetup,
+    environment,
+    hideBasics,
+    onSave,
+    renderRepositoryLocations,
+  }) => {
     const { t } = useTranslation('setting');
+    const [setupOpen, setSetupOpen] = useState(false);
     const configuration = (environment.configuration ?? {}) as SandboxEnvironmentSpecification;
     const [pickingRepository, setPickingRepository] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -482,6 +498,36 @@ const EnvironmentForm = memo<EnvironmentFormProps>(
       );
     };
 
+    // The setup that runs after the repositories, and the variables every
+    // command sees.
+    const setupSections = (
+      <>
+        <PanelSection
+          title={t('environments.form.setup')}
+          desc={
+            repositories.length > 0 ? t('environments.form.bootstrapAfterRepositories') : undefined
+          }
+        >
+          <InlineField
+            multiline
+            desc={t('environments.form.bootstrapHint')}
+            label={t('environments.form.bootstrap')}
+            value={configuration.bootstrapCommand ?? ''}
+            onSave={(bootstrapCommand) => saveConfiguration({ bootstrapCommand })}
+          />
+        </PanelSection>
+
+        {/* Said plainly because the shape cannot enforce it: a text field
+            cannot tell a region from a token. */}
+        <PanelSection desc={t('environments.form.envHint')} title={t('environments.form.env')}>
+          <EnvironmentVariables
+            entries={Object.entries(configuration.env ?? {})}
+            onSave={(entries) => saveConfiguration({ env: Object.fromEntries(entries) })}
+          />
+        </PanelSection>
+      </>
+    );
+
     const basics = (
       <PanelSection title={t('environments.form.basics')}>
         <InlineField
@@ -589,29 +635,44 @@ const EnvironmentForm = memo<EnvironmentFormProps>(
           )}
         </PanelSection>
 
-        <PanelSection
-          title={t('environments.form.setup')}
-          desc={
-            repositories.length > 0 ? t('environments.form.bootstrapAfterRepositories') : undefined
-          }
-        >
-          <InlineField
-            multiline
-            desc={t('environments.form.bootstrapHint')}
-            label={t('environments.form.bootstrap')}
-            value={configuration.bootstrapCommand ?? ''}
-            onSave={(bootstrapCommand) => saveConfiguration({ bootstrapCommand })}
-          />
-        </PanelSection>
-
-        {/* Said plainly because the shape cannot enforce it: a text field
-            cannot tell a region from a token. */}
-        <PanelSection desc={t('environments.form.envHint')} title={t('environments.form.env')}>
-          <EnvironmentVariables
-            entries={Object.entries(configuration.env ?? {})}
-            onSave={(entries) => saveConfiguration({ env: Object.fromEntries(entries) })}
-          />
-        </PanelSection>
+        {collapseSetup ? (
+          <Flexbox>
+            <Flexbox
+              horizontal
+              align={'center'}
+              aria-expanded={setupOpen}
+              gap={8}
+              paddingBlock={16}
+              role={'button'}
+              style={{ cursor: 'pointer' }}
+              tabIndex={0}
+              onClick={() => setSetupOpen((open) => !open)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
+                setSetupOpen((open) => !open);
+              }}
+            >
+              <Icon icon={setupOpen ? ChevronDownIcon : ChevronRightIcon} size={14} />
+              <Text weight={500}>{t('environments.form.setupAndVariables')}</Text>
+              <Text fontSize={12} type={'secondary'}>
+                {[
+                  t(
+                    configuration.bootstrapCommand?.trim()
+                      ? 'environments.form.setupConfigured'
+                      : 'environments.form.setupNotConfigured',
+                  ),
+                  t('environments.form.variablesCount', {
+                    count: Object.keys(configuration.env ?? {}).length,
+                  }),
+                ].join(' · ')}
+              </Text>
+            </Flexbox>
+            {setupOpen && setupSections}
+          </Flexbox>
+        ) : (
+          setupSections
+        )}
       </Flexbox>
     );
   },
