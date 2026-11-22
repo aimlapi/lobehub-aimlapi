@@ -19,18 +19,16 @@ import {
   ChevronUpIcon,
   FolderIcon,
   GitBranchIcon,
-  LaptopIcon,
   PencilIcon,
   PlusIcon,
   TerminalIcon,
   Trash2Icon,
 } from 'lucide-react';
-import { memo, type ReactNode, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useSWR from 'swr';
 
 import { useActiveWorkspaceId } from '@/business/client/hooks/useActiveWorkspaceId';
-import InstantSwitch from '@/components/InstantSwitch';
 import { parseGithubRepository } from '@/features/Projects/CreateFromGithub/githubRepository';
 import { environmentService, type SandboxEnvironmentSpecification } from '@/services/environment';
 import { densityVars } from '@/styles/densityVars';
@@ -61,11 +59,6 @@ export type EnvironmentFormValue = Pick<SandboxEnvironment, 'configuration' | 'n
 
 interface EnvironmentFormProps {
   /**
-   * Offer each repository's local-only switch: only a project has local
-   * folders a local-only repository can run in.
-   */
-  allowLocalOnly?: boolean;
-  /**
    * Folds the setup command and the variables into one row with a summary.
    * They are set once and rarely touched, so on a page that also lists the
    * project's devices they should not push those out of view.
@@ -87,13 +80,10 @@ interface EnvironmentFormProps {
     description?: string;
     name?: string;
   }) => Promise<void>;
-  /** A project's: a note under each repository (e.g. a skipped one nothing checks out). */
-  renderRepositoryLocations?: (source: { localOnly?: boolean; url: string }) => ReactNode;
 }
 
 type GitSource = {
   kind: 'git';
-  localOnly?: boolean;
   path?: string;
   ref?: string;
   setupCommand?: string;
@@ -113,15 +103,11 @@ const repositoryPathOf = (url: string) => {
  * once read as a form to fill rather than a list of what is there.
  */
 const RepositoryRow = memo<{
-  /** Offer the local-only switch: only a project has local folders to run in. */
-  allowLocalOnly?: boolean;
   busy: boolean;
-  /** Where the repository is checked out on the project's devices. */
-  locations?: ReactNode;
   onChange: (next: Partial<Omit<GitSource, 'kind' | 'url'>>) => Promise<void>;
   onRemove: () => void;
   source: GitSource;
-}>(({ allowLocalOnly, busy, locations, onChange, onRemove, source }) => {
+}>(({ busy, onChange, onRemove, source }) => {
   const { t } = useTranslation('setting');
   const [editing, setEditing] = useState(false);
   const github = repositoryPathOf(source.url);
@@ -129,15 +115,6 @@ const RepositoryRow = memo<{
   // One line: the name, then each setting as an icon and its value. The
   // default branch says nothing worth a word, so it shows only when one is set.
   const facts = [
-    ...(allowLocalOnly && source.localOnly
-      ? [
-          {
-            icon: LaptopIcon,
-            title: t('environments.form.localOnly'),
-            value: t('environments.form.localOnly'),
-          },
-        ]
-      : []),
     ...(source.ref
       ? [{ icon: GitBranchIcon, title: t('environments.form.ref'), value: source.ref }]
       : []),
@@ -196,7 +173,6 @@ const RepositoryRow = memo<{
           onClick={onRemove}
         />
       </Flexbox>
-      {locations && <div style={{ marginTop: 8, paddingInlineStart: 28 }}>{locations}</div>}
       {editing && (
         <Flexbox gap={12} style={{ marginTop: 12 }}>
           <Flexbox horizontal align={'flex-start'} gap={12}>
@@ -234,28 +210,6 @@ const RepositoryRow = memo<{
             value={source.setupCommand ?? ''}
             onSave={(setupCommand) => onChange({ setupCommand })}
           />
-          {allowLocalOnly && (
-            <Flexbox horizontal align={'center'} gap={12} justify={'space-between'}>
-              <Flexbox gap={2}>
-                <Text weight={500}>{t('environments.form.localOnly')}</Text>
-                <Text fontSize={12} type={'secondary'}>
-                  {t('environments.form.localOnlyHint')}
-                </Text>
-              </Flexbox>
-              <InstantSwitch
-                enabled={!!source.localOnly}
-                size={'small'}
-                onChange={async (localOnly) => {
-                  try {
-                    await onChange({ localOnly });
-                  } catch (error) {
-                    toast.error(describeError(error, t, t('environments.saveFailed')));
-                    throw error;
-                  }
-                }}
-              />
-            </Flexbox>
-          )}
         </Flexbox>
       )}
     </div>
@@ -338,15 +292,7 @@ BranchField.displayName = 'EnvironmentBranchField';
  * tab switch before anyone scrolled down to it.
  */
 const EnvironmentForm = memo<EnvironmentFormProps>(
-  ({
-    allowLocalOnly,
-    collapseSetup,
-    environment,
-    hideBasics,
-    hideRepositoryHints,
-    onSave,
-    renderRepositoryLocations,
-  }) => {
+  ({ collapseSetup, environment, hideBasics, hideRepositoryHints, onSave }) => {
     const { t } = useTranslation('setting');
     const [setupOpen, setSetupOpen] = useState(false);
     const configuration = (environment.configuration ?? {}) as SandboxEnvironmentSpecification;
@@ -438,8 +384,6 @@ const EnvironmentForm = memo<EnvironmentFormProps>(
           if (!next.ref) delete next.ref;
           if (!next.path) delete next.path;
           if (!next.setupCommand?.trim()) delete next.setupCommand;
-          // Off is the default, stored as the key left out.
-          if (!next.localOnly) delete next.localOnly;
           return next;
         }),
       );
@@ -584,10 +528,8 @@ const EnvironmentForm = memo<EnvironmentFormProps>(
             <Flexbox gap={8}>
               {repositories.map((source) => (
                 <RepositoryRow
-                  allowLocalOnly={allowLocalOnly}
                   busy={busy}
                   key={source.url}
-                  locations={renderRepositoryLocations?.(source)}
                   source={source}
                   onChange={(changes) => updateRepository(source.url, changes)}
                   onRemove={() => removeRepository(source.url)}

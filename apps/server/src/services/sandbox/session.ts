@@ -12,7 +12,7 @@ import {
 } from '@lobechat/builtin-tool-cloud-sandbox';
 import type { LobeChatDatabase } from '@lobechat/database';
 import type { EnvironmentConfiguration } from '@lobechat/types';
-import { withoutLocalOnlySources, withRepositorySetup } from '@lobechat/types';
+import { withRepositorySetup } from '@lobechat/types';
 import debug from 'debug';
 
 import { AgentModel } from '@/database/models/agent';
@@ -128,8 +128,7 @@ const toSessionSpecification = (
 ): SandboxSessionSpecification | undefined => {
   if (!stored) return undefined;
   // Each repository's own setup rides in the one command the plane runs.
-  // Local-only repositories stay on the project's devices.
-  const configuration = withRepositorySetup(withoutLocalOnlySources(stored));
+  const configuration = withRepositorySetup(stored);
 
   const specification: SandboxSessionSpecification = {
     ...(configuration.bootstrapCommand && { bootstrapCommand: configuration.bootstrapCommand }),
@@ -451,11 +450,7 @@ const resolveInitialization = async ({
     // picker offered still clones. Never throws: without one, a public
     // repository clones and a private one fails in the report, by name.
     const cloneCredentials = await resolveScmCloneCredentials({
-      // Only the repositories the sandbox clones get a token: a local-only one
-      // must not become readable from the cloud.
-      configuration: environment.configuration
-        ? withoutLocalOnlySources(environment.configuration)
-        : undefined,
+      configuration: environment.configuration ?? undefined,
       db: serverDB,
       userId,
       workspaceId,

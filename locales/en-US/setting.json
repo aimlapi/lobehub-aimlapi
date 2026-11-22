@@ -961,8 +961,6 @@
   "environments.form.jsonSyntax": "Invalid JSON. Check double quotes, commas and braces, then save again.",
   "environments.form.jsonValues": "Use a JSON object with a string value for every variable, such as {\"NODE_ENV\":\"production\"}.",
   "environments.form.layoutHint": "Each repository is checked out in a folder of its own, side by side. You can change them later in the environment's settings.",
-  "environments.form.localOnly": "Skip in cloud sandbox",
-  "environments.form.localOnlyHint": "Cloud sandboxes don't clone this repository; it's used from the project's device folders. The setup command in the cloud must not depend on it.",
   "environments.form.maintenance": "Maintenance command",
   "environments.form.maintenanceHint": "Runs each time work resumes in a copy — refreshing a checkout, reapplying a migration. Not the setup command again: that one is expensive and is meant to run once.",
   "environments.form.noRepositories": "No repositories. Conversations start in an empty folder.",

@@ -3,13 +3,16 @@ import {
   ActionIcon,
   Button,
   confirmModal,
+  cssVar,
   Flexbox,
   Icon,
-  SortableList,
+  Tag,
   Text,
   toast,
+  Tooltip,
 } from '@lobehub/ui';
 import { FolderIcon, LinkIcon, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AsyncError from '@/components/AsyncError';
@@ -23,16 +26,30 @@ import { openBindDirectoryModal } from './BindDirectoryModal';
 import { openEditDirectoryModal } from './EditDirectoryModal';
 
 /**
- * A device row restored from the persisted list (`onlineUnknown`) has not been
- * confirmed yet, so its presence is left unsaid until `listDevices` answers.
+ * Presence as a dot before the device's name — green online, gray offline —
+ * with the word on hover. A device row restored from the persisted list
+ * (`onlineUnknown`) has not been confirmed yet, so it shows no dot until
+ * `listDevices` answers.
  */
 const DevicePresence = ({ device }: { device?: DeviceListItem }) => {
   const { t } = useTranslation('project');
   if (device?.onlineUnknown) return null;
+  const online = !!device?.online;
   return (
-    <Text fontSize={12} type="secondary">
-      {t(device?.online ? 'settings.deviceOnline' : 'settings.deviceOffline')}
-    </Text>
+    <Tooltip title={t(online ? 'settings.deviceOnline' : 'settings.deviceOffline')}>
+      <span
+        aria-label={t(online ? 'settings.deviceOnline' : 'settings.deviceOffline')}
+        role="img"
+        style={{
+          background: online ? cssVar.colorSuccess : cssVar.colorTextQuaternary,
+          borderRadius: '50%',
+          display: 'inline-block',
+          flex: 'none',
+          height: 8,
+          width: 8,
+        }}
+      />
+    </Tooltip>
   );
 };
 
@@ -44,11 +61,12 @@ interface LocalDirectoriesProps {
 }
 
 /**
- * The project's folders on connected devices — each one a device and the
- * folder its repositories already sit in — in the order devices are tried. The
- * order is the project's device priority: a new conversation starts in the
- * first folder whose device is online, so it is dragged here, not set anywhere
- * else. The section around it names and explains it.
+ * The project's working directory on each device, device by device: where its
+ * code already sits on that machine, so a conversation can run there. A device
+ * that has one shows it; an online device that has none offers to set it — the
+ * machines someone is using are the ones worth a folder. A device the project
+ * left a folder on stays listed while offline, so the folder can be changed or
+ * removed.
  */
 export function LocalDirectories({ canManage, environmentId, projectId }: LocalDirectoriesProps) {
   const { t } = useTranslation('project');
@@ -58,7 +76,6 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
   const devices = useDeviceStore(deviceSelectors.deviceList);
   const isDeviceListLoaded = useDeviceStore(deviceSelectors.isDeviceListLoaded);
   const removeDirectory = useProjectDirectoryStore((s) => s.removeDirectory);
-  const reorderDirectories = useProjectDirectoryStore((s) => s.reorderDirectories);
   const error = directoriesRequest.error || deviceRequest.error;
 
   const remove = (directory: ProjectDirectory) =>
@@ -81,134 +98,139 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
       title: t('settings.removeDirectoryConfirmTitle', { name: directory.name }),
     });
 
-  const reorder = async (next: ProjectDirectory[]) => {
-    try {
-      await reorderDirectories(
-        projectId,
-        next.map((directory) => directory.id),
-      );
-    } catch (error) {
-      console.error('Failed to reorder project directories', error);
-      toast.error(t('settings.reorderDirectoriesFailed'));
-    }
-  };
+  const setDirectory = (deviceId?: string) =>
+    openAddDirectoryModal(projectId, environmentId, deviceId ? { deviceId } : undefined);
 
-  const renderRow = (directory: ProjectDirectory, index: number) => {
-    const device = devices.find((d) => d.deviceId === directory.deviceId);
-    return (
-      <Flexbox horizontal align="center" flex={1} gap={16} justify="space-between">
-        <Flexbox flex={1} gap={4} style={{ minWidth: 0 }}>
-          <Flexbox horizontal align="center" gap={8} wrap="wrap">
-            {getDeviceIcon(device?.platform, 16)}
-            <Text weight={500}>{directory.deviceName || directory.deviceId}</Text>
-            <DevicePresence device={device} />
-            {index === 0 && directories.length > 1 && (
-              <Text fontSize={12} type="secondary">
-                {t('settings.preferredDevice')}
-              </Text>
-            )}
-          </Flexbox>
-          <Flexbox horizontal align="center" gap={6} style={{ minWidth: 0 }}>
-            <Icon icon={FolderIcon} size={14} style={{ flex: 'none' }} />
-            <Text fontSize={12} style={{ overflowWrap: 'anywhere' }} type="secondary">
-              {directory.path}
-            </Text>
-          </Flexbox>
+  /** One device: its name and presence, then what it holds for the project. */
+  const row = (key: string, head: ReactNode, path: ReactNode, actions: ReactNode) => (
+    <Flexbox
+      horizontal
+      align="center"
+      gap={16}
+      justify="space-between"
+      key={key}
+      paddingBlock={10}
+      paddingInline={12}
+      style={{ background: cssVar.colorFillQuaternary, borderRadius: cssVar.borderRadius }}
+    >
+      <Flexbox flex={1} gap={4} style={{ minWidth: 0 }}>
+        <Flexbox horizontal align="center" gap={8} wrap="wrap">
+          {head}
         </Flexbox>
-        <Flexbox horizontal align="center" gap={8}>
-          {/* A legacy row has no environment yet: a state, with linking it one click away. */}
-          {!directory.instanceId && (
-            <Flexbox horizontal align="center" gap={2}>
-              <Text fontSize={12} type="secondary">
-                {t('settings.enableDirectory')}
-              </Text>
-              <ActionIcon
-                icon={LinkIcon}
-                size="small"
-                title={t('settings.enableDirectoryHint')}
-                onClick={() =>
-                  openBindDirectoryModal({
-                    projectId,
-                    deviceId: directory.deviceId,
-                    path: directory.path,
-                  })
-                }
-              />
-            </Flexbox>
-          )}
-          {canManage && (
-            <ActionIcon
-              icon={PencilIcon}
-              size="small"
-              title={t('settings.editDirectory')}
-              onClick={() => openEditDirectoryModal(projectId, directory)}
-            />
-          )}
-          {canManage && (
-            <ActionIcon
-              icon={Trash2Icon}
-              size="small"
-              title={t('settings.removeDirectory')}
-              onClick={() => remove(directory)}
-            />
-          )}
+        <Flexbox horizontal align="center" gap={6} style={{ minWidth: 0 }}>
+          <Icon icon={FolderIcon} size={14} style={{ flex: 'none' }} />
+          {path}
         </Flexbox>
       </Flexbox>
-    );
-  };
+      <Flexbox horizontal align="center" gap={8}>
+        {actions}
+      </Flexbox>
+    </Flexbox>
+  );
 
-  let content;
-  if (error) {
-    content = (
+  const deviceHead = (device: DeviceListItem | undefined, fallbackName: string) => (
+    <>
+      {getDeviceIcon(device?.platform, 16)}
+      <Text weight={500}>{device?.friendlyName || device?.hostname || fallbackName}</Text>
+      <DevicePresence device={device} />
+    </>
+  );
+  // A folder not linked to the environment yet: a quiet badge after the name,
+  // linking it one click away.
+  const unlinkedBadge = (directory: ProjectDirectory) => (
+    <Tooltip title={t('settings.enableDirectoryHint')}>
+      <Tag
+        icon={<Icon icon={LinkIcon} size={12} />}
+        size="small"
+        style={{ cursor: 'pointer' }}
+        onClick={() =>
+          openBindDirectoryModal({
+            projectId,
+            deviceId: directory.deviceId,
+            path: directory.path,
+          })
+        }
+      >
+        {t('settings.enableDirectory')}
+      </Tag>
+    </Tooltip>
+  );
+
+  if (error)
+    return (
       <AsyncError
         error={error}
         onRetry={() => Promise.all([directoriesRequest.revalidate(), deviceRequest.revalidate()])}
       />
     );
-  } else if (!directoriesRequest.hasData || !isDeviceListLoaded) {
-    content = <Text type="secondary">{t('loading', { ns: 'common' })}</Text>;
-  } else if (!directories.length) {
-    content = (
-      <Text fontSize={13} type="secondary">
-        {t('settings.noDirectories')}
-      </Text>
-    );
-  } else if (canManage && directories.length > 1) {
-    content = (
-      <SortableList
-        gap={8}
-        items={directories}
-        renderItem={(directory: ProjectDirectory) => (
-          <SortableList.Item id={directory.id} variant="filled">
-            <SortableList.DragHandle />
-            {renderRow(directory, directories.indexOf(directory))}
-          </SortableList.Item>
+  if (!directoriesRequest.hasData || !isDeviceListLoaded)
+    return <Text type="secondary">{t('loading', { ns: 'common' })}</Text>;
+
+  const withFolders = directories.map((directory) => {
+    const device = devices.find((d) => d.deviceId === directory.deviceId);
+    return row(
+      directory.id,
+      <>
+        {deviceHead(device, directory.deviceName || directory.deviceId)}
+        {!directory.instanceId && unlinkedBadge(directory)}
+      </>,
+      <Text fontSize={12} style={{ overflowWrap: 'anywhere' }} type="secondary">
+        {directory.path}
+      </Text>,
+      <>
+        {canManage && (
+          <ActionIcon
+            icon={PencilIcon}
+            size="small"
+            title={t('settings.editDirectory')}
+            onClick={() => openEditDirectoryModal(projectId, directory)}
+          />
         )}
-        onChange={reorder}
-      />
+        {canManage && (
+          <ActionIcon
+            icon={Trash2Icon}
+            size="small"
+            title={t('settings.removeDirectory')}
+            onClick={() => remove(directory)}
+          />
+        )}
+      </>,
     );
-  } else {
-    content = (
-      <Flexbox gap={8}>
-        {directories.map((directory, index) => (
-          <Flexbox horizontal key={directory.id} paddingBlock={8}>
-            {renderRow(directory, index)}
-          </Flexbox>
-        ))}
-      </Flexbox>
+  });
+
+  const withoutFolder = devices
+    .filter(
+      (device) =>
+        device.online && !directories.some((directory) => directory.deviceId === device.deviceId),
+    )
+    .map((device) =>
+      row(
+        device.deviceId,
+        deviceHead(device, device.deviceId),
+        <Text fontSize={12} type="secondary">
+          {t('settings.deviceNoDirectory')}
+        </Text>,
+        canManage ? (
+          <Button size="small" onClick={() => setDirectory(device.deviceId)}>
+            {t('settings.setDeviceDirectory')}
+          </Button>
+        ) : null,
+      ),
     );
-  }
 
   return (
-    <Flexbox gap={12} style={{ marginTop: 8 }}>
-      {content}
+    <Flexbox gap={8} style={{ marginTop: 8 }}>
+      {withFolders.length + withoutFolder.length === 0 ? (
+        <Text fontSize={13} type="secondary">
+          {t('settings.noDevices')}
+        </Text>
+      ) : (
+        [...withFolders, ...withoutFolder]
+      )}
+      {/* An offline machine has no row of its own; the dialog picks any device. */}
       {canManage && (
         <Flexbox horizontal>
-          <Button
-            icon={<Icon icon={PlusIcon} />}
-            size="small"
-            onClick={() => openAddDirectoryModal(projectId, environmentId)}
-          >
+          <Button icon={<Icon icon={PlusIcon} />} size="small" onClick={() => setDirectory()}>
             {t('settings.addDirectory')}
           </Button>
         </Flexbox>

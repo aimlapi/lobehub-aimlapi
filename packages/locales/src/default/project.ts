@@ -36,8 +36,8 @@ export default {
   'topics.resume': 'Resume work',
   'topics.gatewayUnavailable': 'Enable Agent Gateway before using this project work location.',
 
-  'settings.deviceOnline': 'Device connected',
-  'settings.deviceOffline': 'Device disconnected',
+  'settings.deviceOnline': 'Online',
+  'settings.deviceOffline': 'Offline',
   'topics.title': 'Topics',
   'topics.groupBy': 'Group topics',
   'topics.group.status': 'By status',
@@ -89,10 +89,6 @@ export default {
   'settings.noRepository': 'No GitHub repository linked',
   'settings.noDirectories':
     'No device folders yet. Add a folder on a connected device to run this project there.',
-  'settings.repositoryLocalOnlyWithoutFolder':
-    'Skipped in the cloud sandbox, but the project has no device folder yet.',
-  'settings.preferredDevice': 'Preferred',
-  'settings.reorderDirectoriesFailed': 'Could not save the device order. Try again.',
   'settings.title': 'Project settings',
   'settings.environments': 'Environment',
   'directories.environmentName': 'Environment name',
@@ -689,7 +685,7 @@ export default {
   'createFromGithub.advancedWithCount': 'Advanced settings · {{count}} extra',
   'createFromGithub.extraRepositoriesLabel': 'More repositories',
   'createFromGithub.chooseFromGithub': 'Choose from GitHub',
-  'settings.enableDirectory': 'Not ready',
+  'settings.enableDirectory': 'Not linked',
   'settings.enableDirectoryHint':
     'Link this folder to the project environment so conversations can start in it',
   'overview.context.location.sandboxes': 'Cloud sandbox',
@@ -697,5 +693,9 @@ export default {
   'overview.context.location.emptySandboxDesc':
     'Starts in an empty folder, without the project environment',
   'settings.cloudSandboxGroup': 'Cloud sandbox',
-  'settings.devicesGroup': 'Devices',
+  'settings.devicesGroup': 'Device working directories',
+  'settings.deviceNoDirectory': 'No folder set',
+  'settings.setDeviceDirectory': 'Set folder',
+  'settings.noDevices':
+    'No connected devices yet. Open the LobeHub desktop app or run lh connect on a machine to add it.',
 };

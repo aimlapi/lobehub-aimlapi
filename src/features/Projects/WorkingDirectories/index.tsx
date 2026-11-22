@@ -10,14 +10,9 @@ import EnvironmentForm, {
 import EnvironmentSummary from '@/features/EnvironmentManager/EnvironmentSummary';
 import { EnvironmentListSkeleton } from '@/features/EnvironmentManager/Skeleton';
 import type { SandboxEnvironmentSpecification } from '@/services/environment';
-import {
-  useProjectDirectories,
-  useProjectDirectoryStore,
-  useProjectEnvironments,
-} from '@/store/projectWorkingDirectory';
+import { useProjectDirectoryStore, useProjectEnvironments } from '@/store/projectWorkingDirectory';
 
 import { LocalDirectories } from './LocalDirectories';
-import { RepositoryCloudNotice } from './RepositoryCloudNotice';
 
 interface ProjectWorkingDirectoriesProps {
   /** Whether the caller may change the project, and so its environment. */
@@ -81,8 +76,6 @@ export function ProjectWorkingDirectories({
   const request = useProjectDirectoryStore((s) => s.useFetchEnvironments)(projectId);
   const updateEnvironment = useProjectDirectoryStore((s) => s.updateProjectEnvironment);
   const [environment] = useProjectEnvironments(projectId);
-  const directoriesRequest = useProjectDirectoryStore((s) => s.useFetchDirectories)(projectId);
-  const directories = useProjectDirectories(projectId);
 
   const save = async (changes: {
     configuration?: SandboxEnvironmentSpecification;
@@ -102,25 +95,16 @@ export function ProjectWorkingDirectories({
     cloud = <EnvironmentListSkeleton />;
   } else {
     const value: EnvironmentFormValue = environment;
-    const renderRepositoryLocations = (source: { localOnly?: boolean }) =>
-      source.localOnly && directoriesRequest.hasData && directories.length === 0 ? (
-        <RepositoryCloudNotice />
-      ) : null;
     cloud = canManage ? (
       <EnvironmentForm
-        allowLocalOnly
         collapseSetup
         hideBasics
         hideRepositoryHints
         environment={value}
-        renderRepositoryLocations={renderRepositoryLocations}
         onSave={save}
       />
     ) : (
-      <EnvironmentSummary
-        environment={value}
-        renderRepositoryLocations={renderRepositoryLocations}
-      />
+      <EnvironmentSummary environment={value} />
     );
   }
 

@@ -5467,9 +5467,6 @@ When I am ___, I need ___
   'environments.form.setupNotConfigured': 'No setup',
   'environments.form.variablesCount_one': '{{count}} variable',
   'environments.form.variablesCount_other': '{{count}} variables',
-  'environments.form.localOnly': 'Skip in cloud sandbox',
-  'environments.form.localOnlyHint':
-    "Cloud sandboxes don't clone this repository; it's used from the project's device folders. The setup command in the cloud must not depend on it.",
   'environments.form.bootstrapAfterRepositories':
     "Runs at the top of the working directory, after each repository's own setup. Setup for a single repository goes on that repository.",
   'environments.form.duplicateFolder': 'Another repository already uses this folder.',

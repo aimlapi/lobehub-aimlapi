@@ -1,5 +1,4 @@
 import type { EnvironmentConfiguration } from '@lobechat/types';
-import { isCloudRepositorySource } from '@lobechat/types';
 
 import { getProjectSettingsPath } from '@/features/Projects/Layout/navigation';
 
@@ -23,8 +22,7 @@ export const pickableEnvironments = <T extends { visibility?: string | null }>(
 export const repositorySlug = (environment: {
   configuration?: Pick<EnvironmentConfiguration, 'sources'> | null;
 }): string | undefined => {
-  // The repository a sandbox checks out first: a local-only one never reaches it.
-  const source = environment.configuration?.sources?.find(isCloudRepositorySource);
+  const source = environment.configuration?.sources?.[0];
   if (source?.kind !== 'git') return undefined;
   const { url } = source;
   try {
@@ -44,7 +42,9 @@ export const repositoriesLabel = (environment: {
 }): string | undefined => {
   const first = repositorySlug(environment);
   if (!first) return undefined;
-  const count = (environment.configuration?.sources ?? []).filter(isCloudRepositorySource).length;
+  const count = (environment.configuration?.sources ?? []).filter(
+    (source) => source.kind === 'git',
+  ).length;
   return count > 1 ? `${first} +${count - 1}` : first;
 };
 
@@ -80,7 +80,7 @@ export const environmentChipState = ({
 
 /**
  * The environment the server applies to a project conversation nobody placed:
- * the project's, when it checks out a repository a cloud sandbox may clone (see
+ * the project's, when it checks out a repository (see
  * `resolveProjectTopicSandbox`). Undefined while it loads, or when there is none.
  */
 export const projectStartEnvironmentId = (
@@ -90,7 +90,7 @@ export const projectStartEnvironmentId = (
   }[],
 ) =>
   environments.find((environment) =>
-    (environment.configuration?.sources ?? []).some(isCloudRepositorySource),
+    (environment.configuration?.sources ?? []).some((source) => source.kind === 'git'),
   )?.id;
 
 /**

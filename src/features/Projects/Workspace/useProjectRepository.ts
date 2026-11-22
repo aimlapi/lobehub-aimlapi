@@ -1,4 +1,3 @@
-import { isCloudRepositorySource } from '@lobechat/types';
 import { useState } from 'react';
 
 import { useProjectDirectoryStore, useProjectEnvironments } from '@/store/projectWorkingDirectory';
@@ -8,12 +7,9 @@ type ProjectEnvironment = ReturnType<typeof useProjectEnvironments>[number];
 /** The pick that starts a conversation without the project's environment. */
 export const NO_ENVIRONMENT = 'none';
 
-/**
- * A linked environment a cloud conversation can work in: one that names a
- * repository a sandbox may clone (local-only ones never reach it).
- */
+/** A linked environment a conversation can work in: one that names a repository. */
 export const isRepositoryEnvironment = (environment: ProjectEnvironment) =>
-  (environment.configuration?.sources ?? []).some(isCloudRepositorySource);
+  (environment.configuration?.sources ?? []).some((source) => source.kind === 'git');
 
 /**
  * The project's repositories and the one a new conversation starts in: the

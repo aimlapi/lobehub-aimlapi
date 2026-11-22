@@ -1,6 +1,5 @@
 import type { LobeChatDatabase } from '@lobechat/database';
-import type { ChatTopicMetadata, EnvironmentConfiguration } from '@lobechat/types';
-import { isCloudRepositorySource } from '@lobechat/types';
+import type { ChatTopicMetadata } from '@lobechat/types';
 import debug from 'debug';
 
 import { AgentModel } from '@/database/models/agent';
@@ -21,9 +20,8 @@ export interface ProjectTopicSandboxInput {
   workspaceId?: string;
 }
 
-/** Whether the environment has a repository a cloud sandbox may check out. */
-const hasCloudRepository = (configuration: EnvironmentConfiguration | null | undefined) =>
-  (configuration?.sources ?? []).some(isCloudRepositorySource);
+const hasGitSource = (configuration: { sources?: { kind?: string }[] } | null | undefined) =>
+  (configuration?.sources ?? []).some((source) => source.kind === 'git');
 
 /**
  * The sandbox a new project conversation starts in: the project's environment —
@@ -40,9 +38,6 @@ const hasCloudRepository = (configuration: EnvironmentConfiguration | null | und
  * repository is never picked: it would be shown as the conversation's
  * repository and then never cloned.
  *
- * A repository marked local-only is never cloned in the cloud; a project whose
- * repositories are all local-only applies nothing here.
- *
  * Never throws; a project with no repository starts where any conversation
  * does.
  */
@@ -57,9 +52,7 @@ export const resolveProjectTopicSandbox = async ({
     const environment = await new ProjectEnvironmentRepository(db, userId, workspaceId).get(
       projectId,
     );
-    // Every repository local-only: nothing for a cloud sandbox to check out,
-    // so the conversation is not sent there with the project's name on it.
-    if (!hasCloudRepository(environment.configuration)) return {};
+    if (!hasGitSource(environment.configuration)) return {};
 
     const sharedAgent =
       !!workspaceId &&
