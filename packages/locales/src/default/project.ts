@@ -7,15 +7,15 @@ export default {
   'settings.editDirectoryOtherEnvironment':
     'This folder already belongs to another environment. Choose a different folder or device.',
   'settings.editDirectoryDescription':
-    'Choose the device and folder this local folder points to. Its topics move to the new folder and start new sessions there.',
+    'Choose the device and folder this device folder points to. Its topics move to the new folder and start new sessions there.',
   'settings.editDirectoryFailed': 'Could not update the folder',
   'settings.removeDirectory': 'Remove folder',
   'settings.removeDirectoryConfirmDescription':
-    '{{path}} on {{device}} will no longer be a local folder of this project. Files on the device are not changed. Its topics stay in the project but are no longer linked to this folder.',
+    '{{path}} on {{device}} will no longer be a device folder of this project. Files on the device are not changed. Its topics stay in the project but are no longer linked to this folder.',
   'settings.removeDirectoryConfirmTitle': 'Remove {{name}} from this project?',
   'settings.removeDirectoryFailed':
     'Could not remove the folder. If a topic is running here, wait for it to finish and try again.',
-  'settings.addDirectoryFailed': 'Could not add the local folder',
+  'settings.addDirectoryFailed': 'Could not add the device folder',
   'settings.identifier': 'Project identifier',
   'settings.identifierDescription':
     'Prefix for this project’s task numbers, set when the project is created. Projects without one use the default prefix.',
@@ -29,8 +29,8 @@ export default {
     'Files stay on {{device}}. Linking only organizes the topics in this directory.',
   'directories.bindFailed': 'Could not link directory',
   'topics.associateFailed': 'Could not add topic to project',
-  'topics.chooseLocation': 'Choose a local folder',
-  'topics.addLocation': 'Add a local folder (optional)',
+  'topics.chooseLocation': 'Choose a device folder',
+  'topics.addLocation': 'Add a device folder (optional)',
 
   'topics.complete': 'Mark completed',
   'topics.resume': 'Resume work',
@@ -88,12 +88,9 @@ export default {
   'settings.advanced': 'Advanced',
   'settings.noRepository': 'No GitHub repository linked',
   'settings.noDirectories':
-    'No local folders yet. Add a folder on a connected device to run this project there.',
-  'settings.localDirectories': 'Local folders and device priority',
-  'settings.localDirectoriesHint':
-    "Each folder holds this project's repositories, side by side when there are several; agents read and change files there. Drag to set device priority: a new topic starts in the first folder whose device is online.",
+    'No device folders yet. Add a folder on a connected device to run this project there.',
   'settings.repositoryLocalOnlyWithoutFolder':
-    'Runs only on local devices, but this project has no local folder yet.',
+    'Skipped in the cloud sandbox, but the project has no device folder yet.',
   'settings.preferredDevice': 'Preferred',
   'settings.reorderDirectoriesFailed': 'Could not save the device order. Try again.',
   'settings.title': 'Project settings',
@@ -108,14 +105,14 @@ export default {
   'directories.boundTip':
     "This directory belongs to the project ({{path}}). Switch devices to use the project's directory on another device.",
   'directories.boundRoot':
-    'This topic is bound to a local folder of the project. Start a new topic to use a different folder.',
+    'This topic is bound to a device folder of the project. Start a new topic to use a different folder.',
   'directories.detectRepository': 'Detect GitHub repository',
   'directories.stagedNewTopic': 'A new topic will start in <project>{{name}}</project>',
   'directories.unavailable':
     'Device is offline or the directory is unavailable. Reconnect and retry.',
 
-  'directories.title': 'Local folders',
-  'directories.add': 'Add local folder',
+  'directories.title': 'Device folders',
+  'directories.add': 'Add device folder',
   'directories.bind': 'Link to project',
   'directories.bindDescription':
     'Link the folder below to a project so you can continue working from that project. Files stay on the current device.',
@@ -227,7 +224,7 @@ export default {
   'disabled.action': 'Enable in Labs',
   'disabled.title': 'Project workspaces are an Alpha experiment',
   'delete.confirm.continue': 'Delete project',
-  'delete.confirm.kept.files': "Files in the project's local folders on your devices",
+  'delete.confirm.kept.files': "Files in the project's device folders",
   'delete.confirm.kept.work': 'Tasks, goals, topics and channels',
   'delete.confirm.keptLead': 'These are kept, but no longer belong to a project:',
   'delete.confirm.namePrompt': 'Type “{{name}}” to confirm',
@@ -235,7 +232,7 @@ export default {
     'Project widgets and their run history, Linear sync rules, review sites, dashboards and project memories',
   'delete.confirm.removed.bindings':
     'Links to agents, groups and knowledge bases (your agents and knowledge bases are kept)',
-  'delete.confirm.removed.settings': 'Project settings, members, local folders and environment',
+  'delete.confirm.removed.settings': 'Project settings, members, device folders and environment',
   'delete.confirm.removedLead': 'Deleting “{{name}}” cannot be undone. It permanently removes:',
   'delete.confirm.title': 'Delete project',
   'delete.description':
@@ -306,12 +303,12 @@ export default {
   'rename.success': 'Project renamed',
   'rename.title': 'Rename project',
   'overview.context.location.devices': 'Devices',
-  'overview.context.location.directories': 'Local folders',
+  'overview.context.location.directories': 'Device folders',
   'overview.context.location.directoryUnavailable':
     "Couldn't reach this folder. Check that the device is online and the folder still exists.",
-  'overview.context.location.noDirectories': 'No local folders on this device yet.',
+  'overview.context.location.noDirectories': 'No folders on this device yet.',
   'overview.context.location.noDirectoryTooltip':
-    "This device has no local folder for the project yet, so the conversation starts in the device's default directory.",
+    "This device has no folder for the project yet, so the conversation starts in the device's default directory.",
   'overview.context.location.environments': 'Environment',
   'overview.context.location.noEnvironments': 'The environment has no repositories yet.',
   'overview.context.location.title': 'Execution environment',
@@ -680,8 +677,7 @@ export default {
   'artboard.question.answer': 'Answer',
   'artboard.question.hint': 'Your answer goes to the agent with the next send.',
   'environment.configure': 'Configure environment',
-  'settings.environmentIntro':
-    'Every conversation in this project runs in this environment: its repositories are cloned, the setup command runs, and its variables are set.',
+  'settings.environmentIntro': "Where this project's conversations run, and what each place needs.",
   'createFromGithub.addRepository': 'Add',
   'createFromGithub.removeRepository': 'Remove',
   'createFromGithub.openIntegrations': 'Open GitHub settings',
@@ -694,11 +690,17 @@ export default {
   'createFromGithub.advancedWithCount': 'Advanced settings · {{count}} extra',
   'createFromGithub.extraRepositoriesLabel': 'More repositories',
   'createFromGithub.chooseFromGithub': 'Choose from GitHub',
-  'settings.enableDirectory': 'Enable',
+  'settings.enableDirectory': 'Not ready',
   'settings.enableDirectoryHint':
-    'Link this folder to the project environment so topics can start in it',
+    'Link this folder to the project environment so conversations can start in it',
   'overview.context.location.sandboxes': 'Cloud sandbox',
   'overview.context.location.emptySandbox': 'Empty sandbox',
   'overview.context.location.emptySandboxDesc':
     'Starts in an empty folder, without the project environment',
+  'settings.cloudSandboxGroup': 'Cloud sandbox',
+  'settings.cloudSandboxGroupDesc':
+    'New conversations run here by default: the repositories below are cloned, the setup command runs and the variables are set.',
+  'settings.devicesGroup': 'Devices',
+  'settings.devicesGroupDesc':
+    "Run in the project's folders on connected devices. Drag to set priority: a new conversation uses the first device that is online.",
 };

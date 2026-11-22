@@ -5462,9 +5462,9 @@ When I am ___, I need ___
   'environments.form.editRepositorySettings': 'Edit branch, folder and setup',
   'environments.form.repositorySetupHint':
     "Runs inside this repository's folder after it's cloned, before the environment's setup command.",
-  'environments.form.localOnly': 'Local devices only',
+  'environments.form.localOnly': 'Skip in cloud sandbox',
   'environments.form.localOnlyHint':
-    "Cloud sandboxes skip this repository, and the environment's setup there must not depend on it. Topics that need it run in one of the project's local folders.",
+    "Cloud sandboxes don't clone this repository; it's used from the project's device folders. The setup command in the cloud must not depend on it.",
   'environments.form.bootstrapAfterRepositories':
     "Runs at the top of the working directory, after each repository's own setup. Setup for a single repository goes on that repository.",
   'environments.form.duplicateFolder': 'Another repository already uses this folder.',

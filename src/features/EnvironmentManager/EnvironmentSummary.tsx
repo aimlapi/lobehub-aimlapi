@@ -14,11 +14,9 @@ import PanelSection from './PanelSection';
  */
 const EnvironmentSummary = memo<{
   environment: EnvironmentFormValue;
-  /** A project's local folders, under its repositories as in the form. */
-  localDirectories?: ReactNode;
-  /** As in the form: where each repository is checked out on the project's devices. */
+  /** As in the form: a note under each repository. */
   renderRepositoryLocations?: (source: { localOnly?: boolean; url: string }) => ReactNode;
-}>(({ environment, localDirectories, renderRepositoryLocations }) => {
+}>(({ environment, renderRepositoryLocations }) => {
   const { t } = useTranslation('setting');
   const configuration = environment.configuration ?? {};
   const repositories = (configuration.sources ?? []).flatMap((source) =>
@@ -64,7 +62,6 @@ const EnvironmentSummary = memo<{
             {t('environments.detail.noRepository')}
           </Text>
         )}
-        {localDirectories}
       </PanelSection>
       <PanelSection title={t('environments.form.setup')}>
         <Text code={!!configuration.bootstrapCommand} fontSize={13}>

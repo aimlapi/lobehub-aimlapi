@@ -1,4 +1,3 @@
-import { layoutRepositorySources } from '@lobechat/types';
 import { Flexbox, Text } from '@lobehub/ui';
 import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +9,6 @@ import EnvironmentForm, {
 import EnvironmentSummary from '@/features/EnvironmentManager/EnvironmentSummary';
 import { EnvironmentListSkeleton } from '@/features/EnvironmentManager/Skeleton';
 import type { SandboxEnvironmentSpecification } from '@/services/environment';
-import { deviceSelectors, useDeviceStore } from '@/store/device';
 import {
   useProjectDirectories,
   useProjectDirectoryStore,
@@ -19,7 +17,7 @@ import {
 import { useDensityTokens } from '@/styles/density';
 
 import { LocalDirectories } from './LocalDirectories';
-import { RepositoryLocations } from './RepositoryLocations';
+import { RepositoryCloudNotice } from './RepositoryCloudNotice';
 
 interface ProjectWorkingDirectoriesProps {
   /** Whether the caller may change the project, and so its environment. */
@@ -27,16 +25,33 @@ interface ProjectWorkingDirectoriesProps {
   projectId: string;
 }
 
+/** One of the two places a project conversation runs, with what it needs. */
+const Group = ({ children, desc, title }: { children: ReactNode; desc: string; title: string }) => (
+  <Flexbox gap={4}>
+    <Flexbox gap={4}>
+      <Text fontSize={16} weight={600}>
+        {title}
+      </Text>
+      <Text type="secondary">{desc}</Text>
+    </Flexbox>
+    {children}
+  </Flexbox>
+);
+
 /**
- * The project's environment, laid out in full and flat — the same form an
- * environment's own page shows: the repositories it checks out (any number, or
- * none, each with its own setup), the setup that runs after, and the variables
- * every command sees. Every project has exactly one, made with it — there is nothing
- * to link, pick or create here, only the environment itself to fill in.
+ * Where the project's conversations run, one place at a time, each with only
+ * what it needs:
  *
- * The project's local folders sit right under the repositories: they are where
- * those repositories are checked out on the project's devices, and their order
- * is the device priority a local run follows.
+ * - The cloud sandbox, where a new conversation starts by default: the
+ *   project's environment — the repositories it clones, the setup that runs
+ *   and the variables every command sees. Every project has exactly one,
+ *   made with it, so there is nothing to link or pick, only to fill in.
+ * - Devices: the project's folders on connected machines, where the
+ *   repositories already are. Their order is the device priority a new
+ *   conversation follows.
+ *
+ * A repository the cloud sandbox skips lives in the device folders only, so
+ * it says so when the project has none.
  */
 export function ProjectWorkingDirectories({
   canManage,
@@ -49,8 +64,6 @@ export function ProjectWorkingDirectories({
   const [environment] = useProjectEnvironments(projectId);
   const directoriesRequest = useProjectDirectoryStore((s) => s.useFetchDirectories)(projectId);
   const directories = useProjectDirectories(projectId);
-  useDeviceStore((s) => s.useFetchDevices)(true);
-  const devices = useDeviceStore(deviceSelectors.deviceList);
 
   const save = async (changes: {
     configuration?: SandboxEnvironmentSpecification;
@@ -63,72 +76,51 @@ export function ProjectWorkingDirectories({
     });
   };
 
-  let content: ReactNode;
+  let cloud: ReactNode;
   if (request.error && !environment) {
-    content = <AsyncError error={request.error} onRetry={() => request.revalidate()} />;
+    cloud = <AsyncError error={request.error} onRetry={() => request.revalidate()} />;
   } else if (!request.hasData || !environment) {
-    content = <EnvironmentListSkeleton />;
+    cloud = <EnvironmentListSkeleton />;
   } else {
     const value: EnvironmentFormValue = environment;
-    // Each repository's folder inside a project folder, laid out as a checkout lays it out.
-    const folders = new Map(
-      layoutRepositorySources(environment.configuration?.sources ?? []).flatMap((source) =>
-        source.kind === 'git'
-          ? [
-              [
-                source.url,
-                source.path
-                  ?.trim()
-                  .replace(/^\.?\/+/, '')
-                  .replace(/\/+$/, ''),
-              ],
-            ]
-          : [],
-      ),
-    );
-    const renderRepositoryLocations = (source: { localOnly?: boolean; url: string }) =>
-      directoriesRequest.hasData ? (
-        <RepositoryLocations
-          devices={devices}
-          directories={directories}
-          folder={folders.get(source.url) || undefined}
-          localOnly={source.localOnly}
-        />
+    const renderRepositoryLocations = (source: { localOnly?: boolean }) =>
+      source.localOnly && directoriesRequest.hasData && directories.length === 0 ? (
+        <RepositoryCloudNotice />
       ) : null;
-    const localDirectories = (
-      <LocalDirectories
-        canManage={!!canManage}
-        environmentId={environment.id}
-        projectId={projectId}
-      />
-    );
-    content = canManage ? (
+    cloud = canManage ? (
       <EnvironmentForm
         allowLocalOnly
         hideBasics
         environment={value}
-        localDirectories={localDirectories}
         renderRepositoryLocations={renderRepositoryLocations}
         onSave={save}
       />
     ) : (
       <EnvironmentSummary
         environment={value}
-        localDirectories={localDirectories}
         renderRepositoryLocations={renderRepositoryLocations}
       />
     );
   }
 
   return (
-    <Flexbox gap={16}>
+    <Flexbox gap={32}>
       <Flexbox gap={8}>
         <Text fontSize={pageTitleFontSize} weight={600}>
           {t('settings.environments')}
         </Text>
         <Text type="secondary">{t('settings.environmentIntro')}</Text>
       </Flexbox>
-      {content}
+      <Group desc={t('settings.cloudSandboxGroupDesc')} title={t('settings.cloudSandboxGroup')}>
+        {cloud}
+      </Group>
+      <Group desc={t('settings.devicesGroupDesc')} title={t('settings.devicesGroup')}>
+        <LocalDirectories
+          canManage={!!canManage}
+          environmentId={environment?.id}
+          projectId={projectId}
+        />
+      </Group>
     </Flexbox>
   );
 }

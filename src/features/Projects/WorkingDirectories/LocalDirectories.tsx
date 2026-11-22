@@ -44,11 +44,11 @@ interface LocalDirectoriesProps {
 }
 
 /**
- * The project's folders on its devices, as one section of its environment:
- * where the repositories are checked out locally, and in which order the
- * devices are tried. The order is the project's device priority — a new
- * conversation starts in the first folder whose device is online — so it is
- * dragged here, not set anywhere else.
+ * The project's folders on connected devices — each one a device and the
+ * folder its repositories already sit in — in the order devices are tried. The
+ * order is the project's device priority: a new conversation starts in the
+ * first folder whose device is online, so it is dragged here, not set anywhere
+ * else. The section around it names and explains it.
  */
 export function LocalDirectories({ canManage, environmentId, projectId }: LocalDirectoriesProps) {
   const { t } = useTranslation('project');
@@ -97,16 +97,10 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
     const device = devices.find((d) => d.deviceId === directory.deviceId);
     return (
       <Flexbox horizontal align="center" flex={1} gap={16} justify="space-between">
-        <Flexbox flex={1} gap={6} style={{ minWidth: 0 }}>
-          <Flexbox horizontal align="center" gap={8}>
-            <Icon icon={FolderIcon} size={16} />
-            <Text style={{ overflowWrap: 'anywhere' }} weight={500}>
-              {directory.path}
-            </Text>
-          </Flexbox>
+        <Flexbox flex={1} gap={4} style={{ minWidth: 0 }}>
           <Flexbox horizontal align="center" gap={8} wrap="wrap">
-            {getDeviceIcon(device?.platform, 14)}
-            <Text fontSize={12}>{directory.deviceName || directory.deviceId}</Text>
+            {getDeviceIcon(device?.platform, 16)}
+            <Text weight={500}>{directory.deviceName || directory.deviceId}</Text>
             <DevicePresence device={device} />
             {index === 0 && directories.length > 1 && (
               <Text fontSize={12} type="secondary">
@@ -114,24 +108,33 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
               </Text>
             )}
           </Flexbox>
+          <Flexbox horizontal align="center" gap={6} style={{ minWidth: 0 }}>
+            <Icon icon={FolderIcon} size={14} style={{ flex: 'none' }} />
+            <Text fontSize={12} style={{ overflowWrap: 'anywhere' }} type="secondary">
+              {directory.path}
+            </Text>
+          </Flexbox>
         </Flexbox>
         <Flexbox horizontal align="center" gap={8}>
-          {/* A legacy row has no environment yet, so linking it is still its next step. */}
+          {/* A legacy row has no environment yet: a state, with linking it one click away. */}
           {!directory.instanceId && (
-            <Button
-              icon={LinkIcon}
-              size="small"
-              title={t('settings.enableDirectoryHint')}
-              onClick={() =>
-                openBindDirectoryModal({
-                  projectId,
-                  deviceId: directory.deviceId,
-                  path: directory.path,
-                })
-              }
-            >
-              {t('settings.enableDirectory')}
-            </Button>
+            <Flexbox horizontal align="center" gap={2}>
+              <Text fontSize={12} type="secondary">
+                {t('settings.enableDirectory')}
+              </Text>
+              <ActionIcon
+                icon={LinkIcon}
+                size="small"
+                title={t('settings.enableDirectoryHint')}
+                onClick={() =>
+                  openBindDirectoryModal({
+                    projectId,
+                    deviceId: directory.deviceId,
+                    path: directory.path,
+                  })
+                }
+              />
+            </Flexbox>
           )}
           {canManage && (
             <ActionIcon
@@ -198,12 +201,6 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
 
   return (
     <Flexbox gap={12} style={{ marginTop: 8 }}>
-      <Flexbox gap={4}>
-        <Text weight={500}>{t('settings.localDirectories')}</Text>
-        <Text fontSize={12} type="secondary">
-          {t('settings.localDirectoriesHint')}
-        </Text>
-      </Flexbox>
       {content}
       {canManage && (
         <Flexbox horizontal>

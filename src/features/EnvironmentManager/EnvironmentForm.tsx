@@ -69,18 +69,12 @@ interface EnvironmentFormProps {
    * the project and edited as part of it.
    */
   hideBasics?: boolean;
-  /**
-   * A project's local folders, laid out right under its repositories: where
-   * they are checked out on the project's devices, and which device comes
-   * first. Only a project's environment has them.
-   */
-  localDirectories?: ReactNode;
   onSave: (params: {
     configuration?: SandboxEnvironmentSpecification;
     description?: string;
     name?: string;
   }) => Promise<void>;
-  /** A project's: under each repository, where it is checked out on the project's devices. */
+  /** A project's: a note under each repository (e.g. a skipped one nothing checks out). */
   renderRepositoryLocations?: (source: { localOnly?: boolean; url: string }) => ReactNode;
 }
 
@@ -331,14 +325,7 @@ BranchField.displayName = 'EnvironmentBranchField';
  * tab switch before anyone scrolled down to it.
  */
 const EnvironmentForm = memo<EnvironmentFormProps>(
-  ({
-    allowLocalOnly,
-    environment,
-    hideBasics,
-    localDirectories,
-    onSave,
-    renderRepositoryLocations,
-  }) => {
+  ({ allowLocalOnly, environment, hideBasics, onSave, renderRepositoryLocations }) => {
     const { t } = useTranslation('setting');
     const configuration = (environment.configuration ?? {}) as SandboxEnvironmentSpecification;
     const [pickingRepository, setPickingRepository] = useState(false);
@@ -600,7 +587,6 @@ const EnvironmentForm = memo<EnvironmentFormProps>(
               </Button>
             </Flexbox>
           )}
-          {localDirectories}
         </PanelSection>
 
         <PanelSection
