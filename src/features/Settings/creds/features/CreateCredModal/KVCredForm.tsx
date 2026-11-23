@@ -21,7 +21,6 @@ interface KVCredFormProps {
 
 interface FormValues {
   description?: string;
-  key: string;
   kvPairs: Array<{ key: string; value: string }>;
   name: string;
 }
@@ -50,7 +49,6 @@ const KVCredForm: FC<KVCredFormProps> = ({ credsApi, type, disabled, onCancel, o
 
       await credsApi.client.createKV.mutate({
         description: values.description,
-        key: values.key,
         name: values.name,
         type,
         values: valuesObj,
@@ -78,18 +76,6 @@ const KVCredForm: FC<KVCredFormProps> = ({ credsApi, type, disabled, onCancel, o
           disabled={disabled}
           placeholder={type === 'kv-env' ? 'OpenAI API Key' : 'Internal API Token'}
         />
-      </Form.Field>
-
-      <Form.Field
-        desc={t('creds.form.keyDesc')}
-        label={t('creds.form.key')}
-        name="key"
-        required={t('creds.form.keyRequired')}
-        validate={(value?: string) =>
-          value && !/^[\w-]+$/.test(value) ? t('creds.form.keyPattern') : undefined
-        }
-      >
-        <Input disabled={disabled} placeholder={type === 'kv-env' ? 'openai' : 'internal-api'} />
       </Form.Field>
 
       <KVPairsField disabled={disabled} type={type} />

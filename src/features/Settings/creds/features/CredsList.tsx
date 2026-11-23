@@ -1,10 +1,9 @@
 'use client';
 
 import { type UserCredSummary } from '@lobechat/types';
-import { Empty, Flexbox, Icon, Tag } from '@lobehub/ui';
+import { Empty, Flexbox, Tag } from '@lobehub/ui';
 import * as stylex from '@stylexjs/stylex';
 import { useMutation } from '@tanstack/react-query';
-import { Share2 } from 'lucide-react';
 import { type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,13 +13,13 @@ import { CredsListSkeleton } from '@/components/Skeleton/Settings/tabs/Creds';
 import { usePermission } from '@/hooks/usePermission';
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
 
+import { createCredDetailModal } from './CredDetailModal';
 import { type CredFilter, filterCreds } from './credFilter';
 import CredItem from './CredItem';
 import { createEditCredModal } from './EditCredModal';
 import MarketSignInGate from './MarketSignInGate';
 import { openShareCredModal } from './ShareCredModal';
 import { personalCredsApi as credsApi } from './useCredsApi';
-import { createViewCredModal } from './ViewCredModal';
 
 const styles = stylex.create({
   container: { display: 'flex', flexDirection: 'column', gap: '8px' },
@@ -60,26 +59,27 @@ const CredsList: FC<CredsListProps> = ({ filter = {} }) => {
     },
   });
 
-  const handleEdit = (cred: UserCredSummary) => {
-    createEditCredModal({ cred, credsApi, onSuccess: () => refetch() });
-  };
-
-  const handleView = (cred: UserCredSummary) => {
-    createViewCredModal({ cred, credsApi });
-  };
-
-  // Self-hosted deployments have no workspaces to share into.
-  const shareItems = (cred: UserCredSummary) =>
-    workspaces.length > 0
-      ? [
-          {
-            icon: <Icon icon={Share2} />,
-            key: 'share',
-            label: t('creds.share.menu'),
-            onClick: () => openShareCredModal(cred),
-          },
-        ]
-      : [];
+  const openDetail = (cred: UserCredSummary) =>
+    createCredDetailModal({
+      // Self-hosted deployments have no workspaces to share into.
+      actions:
+        workspaces.length > 0
+          ? [
+              {
+                key: 'share',
+                label: t('creds.share.menu'),
+                onClick: () => openShareCredModal(cred),
+              },
+            ]
+          : [],
+      canReadValues: canManageCredentials,
+      cred,
+      credsApi,
+      onDelete: canManageCredentials ? () => deleteMutation.mutate(cred.id) : undefined,
+      onEdit: canManageCredentials
+        ? () => createEditCredModal({ cred, credsApi, onSuccess: () => refetch() })
+        : undefined,
+    });
 
   return (
     <MarketSignInGate>
@@ -108,18 +108,14 @@ const CredsList: FC<CredsListProps> = ({ filter = {} }) => {
             )}
             {visibleCredentials.map((cred) => (
               <CredItem
-                canManage={canManageCredentials}
                 cred={cred}
-                extraMenuItems={shareItems(cred)}
                 key={cred.id}
                 tags={
                   !!cred.shares?.length && (
                     <Tag>{t('creds.share.badge', { count: cred.shares.length })}</Tag>
                   )
                 }
-                onDelete={(id) => deleteMutation.mutate(id)}
-                onEdit={canManageCredentials ? handleEdit : undefined}
-                onView={handleView}
+                onClick={openDetail}
               />
             ))}
           </Flexbox>

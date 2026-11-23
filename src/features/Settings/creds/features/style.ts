@@ -4,9 +4,18 @@ import * as stylex from '@stylexjs/stylex';
 import { densityTokens } from '@/styles/density.stylex';
 
 export const styles = stylex.create({
+  // The whole row opens the detail modal. The hover fill bleeds 8px past the
+  // card padding so the text column stays aligned with the header above.
   container: {
+    cursor: 'pointer',
+    marginInline: '-8px',
     paddingBlock: densityTokens['--lobe-density-content-gap'],
-    paddingInline: 0,
+    paddingInline: '8px',
+    borderRadius: cssVar.borderRadiusLG,
+    outline: { 'default': 'none', ':focus-visible': `2px solid ${cssVar.colorPrimaryBorder}` },
+    transition: 'background-color 0.2s',
+    backgroundColor: { 'default': null, ':hover': cssVar.colorFillQuaternary },
+    backgroundImage: { 'default': null, ':hover': 'none' },
   },
   // Compact density: 6px block padding, 36px tile, 14px title → ~55px two-line rows.
   containerCompact: {
@@ -36,6 +45,7 @@ export const styles = stylex.create({
     height: '36px',
     borderRadius: '10px',
   },
+  typeIcon: { display: 'flex', color: cssVar.colorTextSecondary },
   title: {
     overflow: 'hidden',
     fontSize: '15px',

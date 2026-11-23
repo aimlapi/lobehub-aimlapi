@@ -1,7 +1,7 @@
 'use client';
 
 import { type UserCredSummary } from '@lobechat/types';
-import { Alert, CopyButton, Descriptions, Flexbox, Text } from '@lobehub/ui';
+import { Alert, Button, CopyButton, Flexbox, Text } from '@lobehub/ui';
 import { cssVar } from '@lobehub/ui/stylex/cssVar.stylex';
 import * as stylex from '@stylexjs/stylex';
 import { useQuery } from '@tanstack/react-query';
@@ -68,8 +68,6 @@ const styles = stylex.create({
     backgroundColor: { 'default': null, ':hover': cssVar.colorFillSecondary },
     backgroundImage: { 'default': null, ':hover': 'none' },
   },
-  valuesSection: { marginBlockStart: '16px' },
-  valuesTitle: { marginBlockEnd: '12px', fontWeight: 500 },
 });
 
 const maskValue = (value: string): string => {
@@ -112,29 +110,39 @@ const KVRow: FC<KVRowProps> = ({ keyName, value }) => {
   );
 };
 
-export interface ViewCredModalContentProps {
+interface CredValuesProps {
   cred: UserCredSummary;
   credsApi: CredsApi;
 }
 
-const ViewCredModalContent: FC<ViewCredModalContentProps> = ({ cred, credsApi }) => {
+/**
+ * The decrypted key/value pairs of an environment-variable or header
+ * credential, each masked until revealed. Only rendered for a credential
+ * the viewer may read back (see `isWriteOnlyCredRow`). Nothing is decrypted
+ * until the viewer asks: opening the detail just to edit, share or delete
+ * must not pull the plaintext into the browser.
+ */
+const CredValues: FC<CredValuesProps> = ({ cred, credsApi }) => {
   const { t } = useTranslation('setting');
+  const [requested, setRequested] = useState(false);
 
   const { data, isLoading, error } = useQuery({
-    queryFn: () =>
-      credsApi.client.get.query({
-        decrypt: true,
-        id: cred.id,
-      }),
+    enabled: requested,
+    // Not kept once the modal closes.
+    gcTime: 0,
+    queryFn: () => credsApi.client.get.query({ decrypt: true, id: cred.id }),
     queryKey: ['cred-plaintext', cred.id],
   });
 
-  const values = (data as any)?.plaintext || {};
-  const valueEntries = Object.entries(values);
-
-  if (isLoading) {
-    return <ArticleSkeleton rows={3} />;
+  if (!requested) {
+    return (
+      <Button size={'small'} onClick={() => setRequested(true)}>
+        {t('creds.view.show')}
+      </Button>
+    );
   }
+
+  if (isLoading) return <ArticleSkeleton rows={2} />;
 
   if (error) {
     return (
@@ -147,47 +155,19 @@ const ViewCredModalContent: FC<ViewCredModalContentProps> = ({ cred, credsApi })
     );
   }
 
+  const valueEntries = Object.entries(
+    (data as { plaintext?: Record<string, string> } | undefined)?.plaintext ?? {},
+  );
+
+  if (valueEntries.length === 0) return <Text type={'secondary'}>{t('creds.view.noValues')}</Text>;
+
   return (
-    <>
-      <Alert
-        showIcon
-        message={t('creds.view.warning')}
-        style={{ marginBottom: 16 }}
-        type={'warning'}
-      />
-      <Descriptions
-        bordered
-        items={[
-          { children: cred.name, key: 'name', label: t('creds.table.name') },
-          { children: <code>{cred.key}</code>, key: 'key', label: t('creds.table.key') },
-          {
-            children: cred.type ? t(`creds.types.${cred.type}` as any) : '-',
-            key: 'type',
-            label: t('creds.table.type'),
-          },
-        ]}
-      />
-
-      {valueEntries.length > 0 && (
-        <div {...stylex.props(styles.valuesSection)}>
-          <div {...stylex.props(styles.valuesTitle)}>{t('creds.view.values')}</div>
-          {valueEntries.map(([key, value]) => (
-            <KVRow key={key} keyName={key} value={String(value)} />
-          ))}
-        </div>
-      )}
-
-      {valueEntries.length === 0 && cred.type === 'oauth' && (
-        <Alert
-          showIcon
-          description={t('creds.view.oauthNote')}
-          message={t('creds.view.noValues')}
-          style={{ marginTop: 16 }}
-          type={'info'}
-        />
-      )}
-    </>
+    <div>
+      {valueEntries.map(([key, value]) => (
+        <KVRow key={key} keyName={key} value={String(value)} />
+      ))}
+    </div>
   );
 };
 
-export default ViewCredModalContent;
+export default CredValues;

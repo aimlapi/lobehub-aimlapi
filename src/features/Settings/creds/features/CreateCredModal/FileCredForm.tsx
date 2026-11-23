@@ -19,7 +19,6 @@ interface FileCredFormProps {
 
 interface FormValues {
   description?: string;
-  key: string;
   name: string;
 }
 
@@ -42,7 +41,6 @@ const FileCredForm: FC<FileCredFormProps> = ({ credsApi, disabled, onCancel, onS
         description: values.description,
         fileHashId,
         fileName,
-        key: values.key,
         name: values.name,
         ...createExtras(credsApi),
       });
@@ -130,18 +128,6 @@ const FileCredForm: FC<FileCredFormProps> = ({ credsApi, disabled, onCancel, onS
 
       <Form.Field label={t('creds.form.name')} name="name" required={t('creds.form.nameRequired')}>
         <Input disabled={disabled} placeholder="e.g., GCP Service Account" />
-      </Form.Field>
-
-      <Form.Field
-        desc={t('creds.form.keyDesc')}
-        label={t('creds.form.key')}
-        name="key"
-        required={t('creds.form.keyRequired')}
-        validate={(value?: string) =>
-          value && !/^[\w-]+$/.test(value) ? t('creds.form.keyPattern') : undefined
-        }
-      >
-        <Input disabled={disabled} placeholder="e.g., gcp-service-account" />
       </Form.Field>
 
       <Form.Field label={t('creds.form.description')} name="description">
