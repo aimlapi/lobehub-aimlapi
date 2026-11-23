@@ -100,28 +100,32 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
   const setDirectory = (deviceId: string) =>
     openAddDirectoryModal(projectId, environmentId, { deviceId });
 
-  /** One device: its name and presence, then what it holds for the project. */
+  /**
+   * One device on one line: its name and state, then the folder it holds for
+   * the project — cut short with the whole path on hover — then its actions.
+   */
   const row = (key: string, head: ReactNode, path: ReactNode, actions: ReactNode) => (
     <Flexbox
       horizontal
       align="center"
       gap={16}
-      justify="space-between"
       key={key}
-      paddingBlock={10}
+      paddingBlock={8}
       paddingInline={12}
       style={{ background: cssVar.colorFillQuaternary, borderRadius: cssVar.borderRadius }}
     >
-      <Flexbox flex={1} gap={4} style={{ minWidth: 0 }}>
-        <Flexbox horizontal align="center" gap={8} wrap="wrap">
-          {head}
-        </Flexbox>
-        <Flexbox horizontal align="center" gap={6} style={{ minWidth: 0 }}>
-          <Icon icon={FolderIcon} size={14} style={{ flex: 'none' }} />
-          {path}
-        </Flexbox>
+      <Flexbox horizontal align="center" gap={8} style={{ flex: 'none', maxWidth: '45%' }}>
+        {head}
       </Flexbox>
-      <Flexbox horizontal align="center" gap={8}>
+      <Flexbox horizontal align="center" flex={1} gap={6} style={{ minWidth: 0 }}>
+        <Icon
+          icon={FolderIcon}
+          size={14}
+          style={{ color: cssVar.colorTextTertiary, flex: 'none' }}
+        />
+        {path}
+      </Flexbox>
+      <Flexbox horizontal align="center" gap={4} style={{ flex: 'none' }}>
         {actions}
       </Flexbox>
     </Flexbox>
@@ -130,7 +134,9 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
   const deviceHead = (device: DeviceListItem | undefined, fallbackName: string) => (
     <>
       {getDeviceIcon(device?.platform, 16)}
-      <Text weight={500}>{device?.friendlyName || device?.hostname || fallbackName}</Text>
+      <Text ellipsis weight={500}>
+        {device?.friendlyName || device?.hostname || fallbackName}
+      </Text>
       <DevicePresence device={device} />
     </>
   );
@@ -177,7 +183,11 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
           {deviceHead(device, directory.deviceName || directory.deviceId)}
           {!directory.instanceId && unlinkedBadge(directory)}
         </>,
-        <Text fontSize={12} style={{ overflowWrap: 'anywhere' }} type="secondary">
+        <Text
+          ellipsis={{ tooltip: directory.path, tooltipWhenOverflow: true }}
+          fontSize={12}
+          type="secondary"
+        >
           {directory.path}
         </Text>,
         <>
