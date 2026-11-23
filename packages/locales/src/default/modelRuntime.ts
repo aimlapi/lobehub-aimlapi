@@ -114,5 +114,5 @@ export default {
   UserConfigError:
     'Provider configuration is invalid (incorrect base URL, missing environment variable, virtual-key restriction, etc.). Please review the provider settings.',
   WorkspaceModelRestricted:
-    'Your workspace admin has restricted this model. Pick another model, or ask a workspace admin to allow it.',
+    'This model is above the highest tier your workspace admin allows you. Pick a lower-tier model, or ask a workspace admin to raise your tier.',
 };

@@ -404,7 +404,7 @@ const SYSTEM_STRINGS: Partial<Record<BotReplyLocale, SystemStrings>> = {
     errorNoAvailableProvider:
       "**No model provider configured.**\nThis bot's agent has no available model provider — please add an API key and enable a provider in the agent's settings, then try again.",
     errorWorkspaceModelRestricted:
-      "**Model restricted by your workspace admin.**\nThis agent's model isn't open to you in this workspace. Please switch the agent to another model, or ask a workspace admin to allow it.",
+      "**Model above your tier.**\nThis agent's model is above the highest model tier your workspace admin allows you. Please switch the agent to a lower-tier model, or ask a workspace admin to raise your tier.",
     errorPermissionDenied:
       "**Permission denied by the model provider.**\nThe API key doesn't have access to the requested model or operation. Please check the key's permissions, or switch to a model your account is authorized to use.",
     errorProviderUnavailable:
@@ -534,7 +534,7 @@ const SYSTEM_STRINGS: Partial<Record<BotReplyLocale, SystemStrings>> = {
     errorNoAvailableProvider:
       '**未配置可用的模型 Provider**\n该机器人的 Agent 当前没有可用的模型 Provider，请在 Agent 设置中添加 API Key 并启用一个 Provider 后重试。',
     errorWorkspaceModelRestricted:
-      '**工作区管理员限制了该模型**\n这个 Agent 使用的模型在当前工作区未对你开放。请在 Agent 设置中切换到其他模型，或联系工作区管理员开放。',
+      '**模型超出了你的可用档位**\n这个 Agent 使用的模型超出了工作区管理员给你设置的最高档位。请在 Agent 设置中切换到更低档位的模型，或联系工作区管理员调高你的档位。',
     errorPermissionDenied:
       '**模型 Provider 拒绝访问**\nAPI Key 没有访问该模型或操作的权限。请检查 Key 的权限范围，或在 Agent 设置中切换到当前账户已授权的模型。',
     errorProviderUnavailable:
