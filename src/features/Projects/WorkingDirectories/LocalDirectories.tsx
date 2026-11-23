@@ -11,18 +11,23 @@ import {
   toast,
   Tooltip,
 } from '@lobehub/ui';
-import { FolderIcon, LinkIcon, PencilIcon, Trash2Icon } from 'lucide-react';
-import { type ReactNode } from 'react';
+import { FolderIcon, PencilIcon, Trash2Icon } from 'lucide-react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AsyncError from '@/components/AsyncError';
 import { getDeviceIcon } from '@/features/DeviceManager/getDeviceIcon';
+import { useSingleton } from '@/hooks/useSingleton';
 import { deviceSelectors, useDeviceStore } from '@/store/device';
 import type { ProjectDirectory } from '@/store/projectWorkingDirectory';
 import { useProjectDirectories, useProjectDirectoryStore } from '@/store/projectWorkingDirectory';
 
 import { openAddDirectoryModal } from './AddDirectoryModal';
-import { openBindDirectoryModal } from './BindDirectoryModal';
+import {
+  type DirectoryEnableAttempt,
+  directoryUnavailableReason,
+  isMissingDirectoryError,
+} from './directoryAvailability';
 import { openEditDirectoryModal } from './EditDirectoryModal';
 
 /**
@@ -75,6 +80,37 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
   const devices = useDeviceStore(deviceSelectors.deviceList);
   const isDeviceListLoaded = useDeviceStore(deviceSelectors.isDeviceListLoaded);
   const removeDirectory = useProjectDirectoryStore((s) => s.removeDirectory);
+  const bind = useProjectDirectoryStore((s) => s.bind);
+
+  // A folder registered before environments existed is not enabled for the
+  // project's environment yet, so nothing can start in it. There is nothing to
+  // choose — a project has one environment — so it is enabled here, once,
+  // while its device is online, by someone who may change the project.
+  const [attempts, setAttempts] = useState<Record<string, DirectoryEnableAttempt>>({});
+  // Tried once per page visit; a folder whose enable is in flight shows nothing.
+  const tried = useSingleton(() => new Set<string>());
+  useEffect(() => {
+    if (!canManage || !environmentId) return;
+    for (const directory of directories) {
+      if (directory.instanceId || tried.has(directory.id)) continue;
+      const device = devices.find((item) => item.deviceId === directory.deviceId);
+      if (!device?.online || device.onlineUnknown) continue;
+      tried.add(directory.id);
+      bind({
+        deviceId: directory.deviceId,
+        environmentId,
+        name: directory.name,
+        path: directory.path,
+        projectId,
+      }).catch((error: unknown) => {
+        console.error('Failed to enable project directory', error);
+        setAttempts((current) => ({
+          ...current,
+          [directory.id]: isMissingDirectoryError(error) ? 'missing' : 'failed',
+        }));
+      });
+    }
+  }, [bind, canManage, devices, directories, environmentId, projectId, tried]);
   const error = directoriesRequest.error || deviceRequest.error;
 
   const remove = (directory: ProjectDirectory) =>
@@ -140,26 +176,25 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
       <DevicePresence device={device} />
     </>
   );
-  // A folder not linked to the environment yet: a quiet badge after the name,
-  // linking it one click away.
-  const unlinkedBadge = (directory: ProjectDirectory) => (
-    <Tooltip title={t('settings.enableDirectoryHint')}>
-      <Tag
-        icon={<Icon icon={LinkIcon} size={12} />}
-        size="small"
-        style={{ cursor: 'pointer' }}
-        onClick={() =>
-          openBindDirectoryModal({
-            projectId,
-            deviceId: directory.deviceId,
-            path: directory.path,
-          })
-        }
-      >
-        {t('settings.enableDirectory')}
-      </Tag>
-    </Tooltip>
-  );
+  // A folder nothing can start in yet, said only when it needs something from
+  // the person: a device to come online, a path to fix, or someone who may.
+  const unavailableBadge = (directory: ProjectDirectory, device?: DeviceListItem) => {
+    const reason = directoryUnavailableReason({
+      attempt: attempts[directory.id],
+      canManage,
+      enabled: !!directory.instanceId,
+      online: !!device?.online,
+      presenceUnknown: !!device?.onlineUnknown,
+    });
+    if (!reason) return null;
+    return (
+      <Tooltip title={t(`settings.directoryUnavailable_${reason}`)}>
+        <Tag color="warning" size="small">
+          {t('settings.directoryUnavailableTag')}
+        </Tag>
+      </Tooltip>
+    );
+  };
 
   if (error)
     return (
@@ -181,7 +216,7 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
         directory.id,
         <>
           {deviceHead(device, directory.deviceName || directory.deviceId)}
-          {!directory.instanceId && unlinkedBadge(directory)}
+          {unavailableBadge(directory, device)}
         </>,
         <Text
           ellipsis={{ tooltip: directory.path, tooltipWhenOverflow: true }}

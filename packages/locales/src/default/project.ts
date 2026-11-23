@@ -685,9 +685,6 @@ export default {
   'createFromGithub.advancedWithCount': 'Advanced settings · {{count}} extra',
   'createFromGithub.extraRepositoriesLabel': 'More repositories',
   'createFromGithub.chooseFromGithub': 'Choose from GitHub',
-  'settings.enableDirectory': 'Not linked',
-  'settings.enableDirectoryHint':
-    'Link this folder to the project environment so conversations can start in it',
   'overview.context.location.sandboxes': 'Cloud sandbox',
   'overview.context.location.emptySandbox': 'Empty sandbox',
   'overview.context.location.emptySandboxDesc':
@@ -700,4 +697,13 @@ export default {
     'No connected devices yet. Open the LobeHub desktop app or run lh connect on a machine to add it.',
   'settings.setDirectoryDescription':
     'Enter the full path of an existing folder on {{device}}. Files stay on that device.',
+  'settings.directoryUnavailableTag': 'Unavailable',
+  'settings.directoryUnavailable_offline':
+    'The device is offline. The folder becomes usable once the device is online.',
+  'settings.directoryUnavailable_missing':
+    "This folder isn't on the device. Edit its path or remove it.",
+  'settings.directoryUnavailable_failed':
+    "This folder couldn't be set up. Check its path, or try again later.",
+  'settings.directoryUnavailable_needsManager':
+    'A project manager needs to open this page while the device is online.',
 };
