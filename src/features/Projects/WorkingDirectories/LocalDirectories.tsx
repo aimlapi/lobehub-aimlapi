@@ -137,10 +137,17 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
     openAddDirectoryModal(projectId, environmentId, { deviceId });
 
   /**
-   * One device on one line: its name and state, then the folder it holds for
-   * the project — cut short with the whole path on hover — then its actions.
+   * One device on one line: its name, the folder it holds for the project —
+   * cut short with the whole path on hover — then on the right its state
+   * (an availability tag, the presence dot) and its actions.
    */
-  const row = (key: string, head: ReactNode, path: ReactNode, actions: ReactNode) => (
+  const row = (
+    key: string,
+    head: ReactNode,
+    path: ReactNode,
+    status: ReactNode,
+    actions: ReactNode,
+  ) => (
     <Flexbox
       horizontal
       align="center"
@@ -161,6 +168,9 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
         />
         {path}
       </Flexbox>
+      <Flexbox horizontal align="center" gap={8} style={{ flex: 'none' }}>
+        {status}
+      </Flexbox>
       <Flexbox horizontal align="center" gap={4} style={{ flex: 'none' }}>
         {actions}
       </Flexbox>
@@ -173,7 +183,6 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
       <Text ellipsis weight={500}>
         {device?.friendlyName || device?.hostname || fallbackName}
       </Text>
-      <DevicePresence device={device} />
     </>
   );
   // A folder nothing can start in yet, said only when it needs something from
@@ -214,10 +223,7 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
       const device = devices.find((d) => d.deviceId === directory.deviceId);
       return row(
         directory.id,
-        <>
-          {deviceHead(device, directory.deviceName || directory.deviceId)}
-          {unavailableBadge(directory, device)}
-        </>,
+        deviceHead(device, directory.deviceName || directory.deviceId),
         <Text
           ellipsis={{ tooltip: directory.path, tooltipWhenOverflow: true }}
           fontSize={12}
@@ -225,6 +231,10 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
         >
           {directory.path}
         </Text>,
+        <>
+          {unavailableBadge(directory, device)}
+          <DevicePresence device={device} />
+        </>,
         <>
           {canManage && (
             <ActionIcon
@@ -256,6 +266,7 @@ export function LocalDirectories({ canManage, environmentId, projectId }: LocalD
         <Text fontSize={12} type="secondary">
           {t('settings.deviceNoDirectory')}
         </Text>,
+        <DevicePresence device={device} />,
         canManage ? (
           <Button size="small" onClick={() => setDirectory(device.deviceId)}>
             {t('settings.setDeviceDirectory')}
